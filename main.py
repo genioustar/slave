@@ -5,6 +5,58 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
+
+def check_reservation(count=0):
+    table = driver.find_element(By.CLASS_NAME, 'ui-datepicker-calendar')
+    tbody = table.find_element(By.TAG_NAME, "tbody")
+    rows = tbody.find_elements(By.TAG_NAME, "tr")
+
+    for index, row in enumerate(rows):
+        td = row.find_elements(By.TAG_NAME, 'td')
+        # 캠장 예약 가능한 날짜 보관하는 list
+
+        # tr_disabled += row.find_elements(By.CLASS_NAME, 'date-disabled')
+
+        for tmp in td:
+            # print(tmp.get_attribute('class').find('date-disabled') or tmp.get_attribute('class').find('ui-state-disabled'))
+            if tmp.get_attribute('class').find('-disabled') != -1:
+                # print(tmp.text)
+                tr_disabled.append(tmp)
+            else:
+                # print('posi : ' + tmp.text)
+                tr_possible.append(tmp)
+
+    tr_possible[count - 2].click()
+
+    if count == 0:
+        print(count)
+        count = count + 1
+        check_reservation(count)
+    
+    # 선택한 날짜의 예약 가능한 사이트 리스트 저장
+    a = driver.find_elements(By.CLASS_NAME, 'site_info')
+
+    start_date = driver.find_element(By.CSS_SELECTOR, '#container > div > div.imply > div.section.calendar > div.view_date > div > div:nth-child(1) > div > span')
+    end_date = driver.find_element(By.CSS_SELECTOR, '#sel_res_days > option:nth-child(2)')
+
+    print(start_date.text)
+    print(end_date.text)
+
+    # 마지막 날짜 넣을때 n-1번째 보다 n번째 날이 더 클때는 무시하게 넣기!
+    camping_possible_date = []  # [2022.04.01 - 2022.04.02, 2022.04.02 - 2022.04.03, ...]
+    camping_possible_site = []  # [[가족형 1, 예약가능 1자리],[계곡파쇄석, 예약가능 3자리],[],[], ...]
+
+    # list에다가 넣고
+    for b in a:
+        if b.text.find('예약가능') != -1:
+            print(b.text)
+            print('--------------------------------------')
+        else:
+            print("예약 불가 : " + b.text)
+
+    time.sleep(2)
+
+
 url = 'https://m.thankqcamping.com/resv/search.hbb'
 
 driver = webdriver.Chrome('chromedriver.exe')
@@ -27,73 +79,33 @@ driver.switch_to.window(driver.window_handles[-1])
 # time.sleep(2)
 driver.find_element(By.CLASS_NAME, 'btn_layerClose').click()
 
-table = driver.find_element(By.CLASS_NAME, 'ui-datepicker-calendar')
-tbody = table.find_element(By.TAG_NAME, "tbody")
-rows = tbody.find_elements(By.TAG_NAME, "tr")
-
-# print(rows[0].find_elements(By.CLASS_NAME, 'date-disabled')[0].text)
-# print(rows[0].find_elements(By.CLASS_NAME, 'date-disabled')[1].text)
-# print(rows[0].find_elements(By.CLASS_NAME, 'date-disabled')[2].text)
 tr_disabled = []
 tr_possible = []
 
-for index, row in enumerate(rows):
-    td = row.find_elements(By.TAG_NAME, 'td')
-    # 캠장 예약 가능한 날짜 보관하는 list
+# 1일부터 말일까지 예약일자 확인하는 것!
+check_reservation()
 
-    # tr_disabled += row.find_elements(By.CLASS_NAME, 'date-disabled')
-
-    for tmp in td:
-        # print(tmp.get_attribute('class').find('date-disabled') or tmp.get_attribute('class').find('ui-state-disabled'))
-        if tmp.get_attribute('class').find('date-disabled') != -1:
-            # print(tmp.text)
-            tr_disabled.append(tmp)
-        else:
-            # print('posi : ' + tmp.text)
-            tr_possible.append(tmp)
-
-tr_possible[-2].click()
-
-# TODO 페이지가 새로고처지는 바람에 이런일이 발생하는데... 중복 되는 코드를 줄일 방법을 찾아보기...
-table = driver.find_element(By.CLASS_NAME, 'ui-datepicker-calendar')
-tbody = table.find_element(By.TAG_NAME, "tbody")
-rows = tbody.find_elements(By.TAG_NAME, "tr")
+# 다음달로 넘어갈때!
+driver.find_element(By.CSS_SELECTOR, '#DivCalendar > div > div > a.ui-datepicker-next.ui-corner-all').click()
+time.sleep(2)
 
 tr_disabled = []
 tr_possible = []
 
+table = driver.find_element(By.CLASS_NAME, 'ui-datepicker-calendar')
+tbody = table.find_element(By.TAG_NAME, "tbody")
+rows = tbody.find_elements(By.TAG_NAME, "tr")
+
 for index, row in enumerate(rows):
     td = row.find_elements(By.TAG_NAME, 'td')
-    # 캠장 예약 가능한 날짜 보관하는 list
-
-    # tr_disabled += row.find_elements(By.CLASS_NAME, 'date-disabled')
 
     for tmp in td:
-        # print(tmp.get_attribute('class').find('date-disabled') or tmp.get_attribute('class').find('ui-state-disabled'))
-        if tmp.get_attribute('class').find('date-disabled') != -1:
-            # print(tmp.text)
+        if tmp.get_attribute('class').find('-disabled') != -1:
+            print(tmp.text)
             tr_disabled.append(tmp)
         else:
-            # print('posi : ' + tmp.text)
+            print('posi : ' + tmp.text)
             tr_possible.append(tmp)
-
-# for a in tr_possible:
-#     print(a)
-
-tr_possible[-1].click()
-
-a = driver.find_elements(By.CLASS_NAME, 'site_info')
-
-start_date = driver.find_element(By.CSS_SELECTOR, '#container > div > div.imply > div.section.calendar > div.view_date > div > div:nth-child(1) > div > span')
-end_date = driver.find_element(By.CSS_SELECTOR, '#sel_res_days > option:nth-child(2)')
-
-print(start_date.text)
-print(end_date.text)
-
-for b in a:
-    if b.text.find('예약완료') == -1:
-        print(b.text)
-        print('--------------------------------------')
 
 while (True):
     pass
