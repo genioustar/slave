@@ -1,9 +1,12 @@
+import asyncio
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
+from camp_site_crawler import CampSiteCrawler
 
-def main(site_list):
+
+def reserve_site_main(site_list):
     if len(site_list) == 0:
         quit()
     else:
@@ -56,18 +59,12 @@ def check_reservation(driver, site_list, count=0, click=0):
                 tr_possible.append([index, tmp])
 
     if count < len(tr_possible) - 1:
-        print('count : ' + str(count))
-        print('len : ' + str(len(tr_possible)))
-        print('posi_tr : ' + tr_possible[count][1].text)
-        print('posi_tr_idx : ' + str(tr_possible[count]))
         if int(tr_possible[count][1].text) + 1 == int(tr_possible[count + 1][1].text) or (count == 0 and tr_possible[count][1].text in first_day_check):
             # 처음시작하는 날짜가 마지막 날이고 1일이 아닐때!
             if tr_possible[count][0] > 3 and int(tr_possible[count][1].text) < 8:
                 next_month_check(driver, site_list)
             else:
-                print('33333')
                 if click % 2 == 1:
-                    print('4444444')
                     tr_possible[count][1].click()
                     click = 0
                     save_site_info(driver)
@@ -80,7 +77,6 @@ def check_reservation(driver, site_list, count=0, click=0):
 
         elif int(tr_possible[count][1].text) + 1 != int(tr_possible[count + 1][1].text):
             if click % 2 == 1:
-                print('123123')
                 tr_possible[count][1].click()
                 save_site_info(driver)
                 click = 0
@@ -88,12 +84,9 @@ def check_reservation(driver, site_list, count=0, click=0):
                 check_reservation(driver, site_list, count, click)
 
             if int(tr_possible[count][1].text) > int(tr_possible[count + 1][1].text):
-                print('22222')
                 next_month_check(driver, site_list)
 
     else:
-        print('count11 : ' + str(count))
-        print('len11 : ' + str(len(tr_possible)))
         if click % 2 == 1:
             tr_possible[count][1].click()
             click = 0
@@ -141,10 +134,60 @@ def next_month_check(driver, site_list):
     else:
         print("끝!")
         driver.quit()
-        main(site_list)
+        reserve_site_main(site_list)
+
+
+def get_sub_region(_driver, _city) -> list:
+    sub_region_list = []
+    _city.click()
+    time.sleep(2)
+    for sub_region in _driver.find_element(By.CSS_SELECTOR, '#li_sub_region').find_elements(By.CLASS_NAME, 'wdh_sub'):
+        sub_region.click()
+        time.sleep(0.5)
+        _driver.find_element(By.ID, 'btnSearch').click()
+        _driver.switch_to.window(_driver.window_handles[-1])
+        sub_region_list.append(_driver.current_url)
+        _driver.close()
+        _driver.switch_to.window(_driver.window_handles[-1])
+        sub_region.click()
+
+    return sub_region_list
+
+
+def get_site_list():
+    url = 'https://m.thankqcamping.com/resv/regionSearch.hbb?site_tp='
+
+    driver = webdriver.Chrome('chromedriver.exe')
+    driver.implicitly_wait(3)
+
+    # 오토캠핑, 글램핑, 카라반, 펜션, 렌트, 캠프닉 url 만들어서 직접 호출함
+    camp_type = ['BB000', 'BB001', 'BB002', 'BB003', 'BB004', 'BB006']
+    # for camp in camp_type:
+    #     campTypeUrl = url + camp
+    #     print(campTypeUrl)
+    #     driver.get(campTypeUrl)
+    #     campTypeUrl=''
+    #     time.sleep(1)
+
+    # 오토캠핑장 1개만 가져오는거
+    campTypeUrl = url + camp_type[0]
+    driver.get(campTypeUrl)
+
+    # city별 캠핑장 url 가져오기
+    for city in driver.find_element(By.CSS_SELECTOR, '#container > div.area_wp > div.iscroll_1 > div > ul').find_elements(By.CSS_SELECTOR, 'li'):
+        camp_site_crawler = CampSiteCrawler()
+        asyncio.run(camp_site_crawler.gether_sub_region(get_sub_region(driver, city)))
+        break
+
+    # driver.switch_to.window(driver.window_handles[-1])
+    # time.sleep(2)
+
+    while True:
+        pass
 
 
 if __name__ == "__main__":
     # TODO 캠핑장 site 정보 크롤링
-    site_list = ['무릉도원', '마의태자']
-    main(site_list)
+    # site_list = ['무릉도원', '마의태자']
+    # reserve_site_main(site_list)
+    get_site_list()
