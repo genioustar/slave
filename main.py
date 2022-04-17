@@ -136,25 +136,40 @@ def next_month_check(driver, site_list):
         driver.quit()
         reserve_site_main(site_list)
 
-
+# 도별 시별 캠핑장 정보 가져오는 함수
 def get_sub_region(_driver, _city) -> list:
     sub_region_list = []
     _city.click()
     time.sleep(2)
-    for sub_region in _driver.find_element(By.CSS_SELECTOR, '#li_sub_region').find_elements(By.CLASS_NAME, 'wdh_sub'):
-        sub_region.click()
-        time.sleep(0.5)
-        _driver.find_element(By.ID, 'btnSearch').click()
-        _driver.switch_to.window(_driver.window_handles[-1])
-        sub_region_list.append(_driver.current_url)
-        _driver.close()
-        _driver.switch_to.window(_driver.window_handles[-1])
-        sub_region.click()
+    for sub_cities in _driver.find_elements(By.ID, 'all_sub_region'):
+        # print(_driver.find_elements(By.CSS_SELECTOR, '#li_sub_region'))
+        if sub_cities.text == '강원 전체':
+            pass
+        else:
+            sub_cities.click()
+            find_location = ''
+            # 삽질 지렸다... #li_sub_region이 많아서... 실제 선택되어있는놈을 찾아주는게 아래 for문;;
+            for f_location in _driver.find_elements(By.CSS_SELECTOR, '#li_sub_region'):
+                if f_location.get_attribute('style').find('display: block;') == 0:
+                    find_location = f_location
+
+            for sub_region in find_location.find_elements(By.CLASS_NAME, 'wdh_sub'):
+                sub_region.click()
+                time.sleep(1)
+                _driver.find_element(By.ID, 'btnSearch').click()
+                _driver.switch_to.window(_driver.window_handles[-1])
+                sub_region_list.append(_driver.current_url)
+                _driver.close()
+                _driver.switch_to.window(_driver.window_handles[-1])
+                sub_region.click()
+                # 강원군만 누르기
+                # break
+        # 강원권만 할라고 break 실제로는 빼기
 
     return sub_region_list
 
 
-def get_site_list():
+def get_site_list(result):
     url = 'https://m.thankqcamping.com/resv/regionSearch.hbb?site_tp='
 
     driver = webdriver.Chrome('chromedriver.exe')
@@ -173,21 +188,31 @@ def get_site_list():
     campTypeUrl = url + camp_type[0]
     driver.get(campTypeUrl)
 
-    # city별 캠핑장 url 가져오기
+    # 도별 캠핑장 url 가져오기
     for city in driver.find_element(By.CSS_SELECTOR, '#container > div.area_wp > div.iscroll_1 > div > ul').find_elements(By.CSS_SELECTOR, 'li'):
+        print(city.text)
         camp_site_crawler = CampSiteCrawler()
-        asyncio.run(camp_site_crawler.gether_sub_region(get_sub_region(driver, city)))
-        break
+        camp_list = get_sub_region(driver, city)
+
+        if len(camp_list) == 0:
+            print(f'캠핑장 정보가 없음! : {camp_list}')
+
+        else:
+            result = asyncio.run(camp_site_crawler.gether_sub_region(camp_list, result))
+        # break
 
     # driver.switch_to.window(driver.window_handles[-1])
     # time.sleep(2)
 
-    while True:
-        pass
+    # while True:
+    #     pass
 
 
 if __name__ == "__main__":
+    global result
+    result = []
+
     # TODO 캠핑장 site 정보 크롤링
     # site_list = ['무릉도원', '마의태자']
     # reserve_site_main(site_list)
-    get_site_list()
+    get_site_list(result)

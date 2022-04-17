@@ -2,17 +2,25 @@ import asyncio
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-
-result = []
-
+from bs4 import BeautifulSoup
 
 class CampSiteCrawler:
 
-    async def camp_site_info(self, param):
+    async def camp_site_info(self, param, result):
         url = param
         driver = webdriver.Chrome('chromedriver.exe')
         driver.implicitly_wait(3)
         driver.get(url)
+
+        # htmslDoc = driver.page_source
+        #
+        # soup = BeautifulSoup(htmslDoc, 'html.parser')
+        # # print(soup.find('form', {'name': 'form'}).select('input'))
+        # url_parms = {}
+        # for f in soup.find('form', {'name': 'form'}).select('input'):
+        #     url_parms[f.get('name')] = f.get('name')
+        #
+        # print(url_parms)
 
         scroll_location = driver.execute_script("return document.body.scrollHeight")
         while True:
@@ -31,11 +39,23 @@ class CampSiteCrawler:
                 scroll_location = driver.execute_script("return document.body.scrollHeight")
 
         for aa in driver.find_elements(By.CLASS_NAME, 'item'):
-            print(aa.text)
+            # print(len(aa.find_element(By.CSS_SELECTOR, 'a').get_attribute('href').split(',')))
+            if len(aa.find_element(By.CSS_SELECTOR, 'a').get_attribute('href').split(',')) == 3:
+                # print(aa.find_element(By.CSS_SELECTOR, 'a').get_attribute('href').split(',')[1])
+                result.append('https://m.thankqcamping.com/resv/view.hbb?cseq=' + aa.find_element(By.CSS_SELECTOR, 'a').get_attribute('href').split(',')[1])
+            else:
+                # print(aa.find_element(By.CSS_SELECTOR, 'a').get_attribute('href').split(',')[0].split('(')[1])
+                result.append('https://m.thankqcamping.com/resv/view.hbb?cseq=' + aa.find_element(By.CSS_SELECTOR, 'a').get_attribute('href').split(',')[0].split('(')[1])
 
-    async def gether_sub_region(self, siteList):
+    async def gether_sub_region(self, siteList, result):
         tmpList = []
         for url in siteList:
-            tmpList.append(self.camp_site_info(url))
+            tmpList.append(self.camp_site_info(url, result))
+            # break
 
         await asyncio.wait(tmpList)
+        print(len(result))
+        print(result)
+        result1 = set(result)
+        print(len(result1))
+        return result
