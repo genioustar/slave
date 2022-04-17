@@ -136,44 +136,43 @@ def next_month_check(driver, site_list):
         driver.quit()
         reserve_site_main(site_list)
 
-# 도별 시별 캠핑장 정보 가져오는 함수
+
 def get_sub_region(_driver, _city) -> list:
     sub_region_list = []
     _city.click()
     time.sleep(2)
     for sub_cities in _driver.find_elements(By.ID, 'all_sub_region'):
         # print(_driver.find_elements(By.CSS_SELECTOR, '#li_sub_region'))
-        if sub_cities.text == '강원 전체':
-            pass
-        else:
-            sub_cities.click()
-            find_location = ''
-            # 삽질 지렸다... #li_sub_region이 많아서... 실제 선택되어있는놈을 찾아주는게 아래 for문;;
-            for f_location in _driver.find_elements(By.CSS_SELECTOR, '#li_sub_region'):
-                if f_location.get_attribute('style').find('display: block;') == 0:
-                    find_location = f_location
+        sub_cities.click()
+        find_location = ''
+        # 삽질 지렸다... #li_sub_region이 많아서... 실제 선택되어있는놈을 찾아주는게 아래 for문;;
+        for f_location in _driver.find_elements(By.CSS_SELECTOR, '#li_sub_region'):
+            if f_location.get_attribute('style').find('display: block;') == 0:
+                find_location = f_location
 
-            for sub_region in find_location.find_elements(By.CLASS_NAME, 'wdh_sub'):
-                sub_region.click()
-                time.sleep(1)
-                _driver.find_element(By.ID, 'btnSearch').click()
-                _driver.switch_to.window(_driver.window_handles[-1])
-                sub_region_list.append(_driver.current_url)
-                _driver.close()
-                _driver.switch_to.window(_driver.window_handles[-1])
-                sub_region.click()
-                # 강원군만 누르기
-                # break
-        # 강원권만 할라고 break 실제로는 빼기
+        for sub_region in find_location.find_elements(By.CLASS_NAME, 'wdh_sub'):
+            sub_region.click()
+            time.sleep(1)
+            _driver.find_element(By.ID, 'btnSearch').click()
+            _driver.switch_to.window(_driver.window_handles[-1])
+            sub_region_list.append(_driver.current_url)
+            _driver.close()
+            _driver.switch_to.window(_driver.window_handles[-1])
+            sub_region.click()
+            # 강원군만 누르기
+            # break
+    # 강원권만 할라고 break 실제로는 빼기
 
     return sub_region_list
 
 
-def get_site_list(result):
+def get_site_list():
     url = 'https://m.thankqcamping.com/resv/regionSearch.hbb?site_tp='
 
     driver = webdriver.Chrome('chromedriver.exe')
     driver.implicitly_wait(3)
+
+    result = []
 
     # 오토캠핑, 글램핑, 카라반, 펜션, 렌트, 캠프닉 url 만들어서 직접 호출함
     camp_type = ['BB000', 'BB001', 'BB002', 'BB003', 'BB004', 'BB006']
@@ -188,19 +187,18 @@ def get_site_list(result):
     campTypeUrl = url + camp_type[0]
     driver.get(campTypeUrl)
 
-    # 도별 캠핑장 url 가져오기
+    # city별 캠핑장 url 가져오기
     for city in driver.find_element(By.CSS_SELECTOR, '#container > div.area_wp > div.iscroll_1 > div > ul').find_elements(By.CSS_SELECTOR, 'li'):
-        print(city.text)
         camp_site_crawler = CampSiteCrawler()
         camp_list = get_sub_region(driver, city)
 
         if len(camp_list) == 0:
-            print(f'캠핑장 정보가 없음! : {camp_list}')
-
+            pass
         else:
             result = asyncio.run(camp_site_crawler.gether_sub_region(camp_list, result))
         # break
 
+    return result
     # driver.switch_to.window(driver.window_handles[-1])
     # time.sleep(2)
 
@@ -209,10 +207,11 @@ def get_site_list(result):
 
 
 if __name__ == "__main__":
-    global result
-    result = []
-
     # TODO 캠핑장 site 정보 크롤링
     # site_list = ['무릉도원', '마의태자']
     # reserve_site_main(site_list)
-    get_site_list(result)
+    site_info = get_site_list()
+    site_info = set(site_info)
+    print(len(site_info))
+    print(site_info)
+

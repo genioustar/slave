@@ -56,6 +56,4 @@ class CampSiteCrawler:
         await asyncio.wait(tmpList)
         print(len(result))
         print(result)
-        result1 = set(result)
-        print(len(result1))
         return result
