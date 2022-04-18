@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 class CampSiteCrawler:
 
-    async def camp_site_info(self, param, result):
+    async def get_camp_site_url(self, param, result):
         url = param
         driver = webdriver.Chrome('chromedriver.exe')
         driver.implicitly_wait(3)
@@ -50,10 +50,24 @@ class CampSiteCrawler:
     async def gether_sub_region(self, siteList, result):
         tmpList = []
         for url in siteList:
-            tmpList.append(self.camp_site_info(url, result))
+            tmpList.append(self.get_camp_site_url(url, result))
             # break
 
         await asyncio.wait(tmpList)
         print(len(result))
         print(result)
         return result
+
+
+    def camp_site_info(self, urls):
+        driver = webdriver.Chrome('chromedriver.exe')
+        driver.implicitly_wait(3)
+        for url in urls:
+            driver.get(url)
+            driver.find_element(By.CSS_SELECTOR, '#container > div > div.section.reser_info').click()
+            time.sleep(1)
+            # TODO 여기 print찍는걸 체계화해서 json타입으로 변경할 것~!
+            print(driver.find_element(By.CSS_SELECTOR, '#container > div > div.section.top').text)
+            print('===========================================================================================')
+            print(driver.find_element(By.CSS_SELECTOR, '#container > div > div.section.reser_info').text)
+

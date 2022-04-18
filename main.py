@@ -206,12 +206,39 @@ def get_site_list():
     #     pass
 
 
+def read_camp_file():
+    f = open('site_list.txt', 'r')
+    a = f.readlines()
+    f.close()
+
+    b = []
+    for line in a:
+        line = line.strip()
+        line = line.strip('{')
+        line = line.strip('}')
+        b.append(line)
+
+    site_count = b[0]
+    strings = b[1].split(',')
+    strings = list(map(lambda x: x.replace("'", ''), strings))
+    return site_count, strings
+
+
 if __name__ == "__main__":
-    # TODO 캠핑장 site 정보 크롤링
+    # 예약 가능일 가져오는 port
     # site_list = ['무릉도원', '마의태자']
     # reserve_site_main(site_list)
-    site_info = get_site_list()
-    site_info = set(site_info)
-    print(len(site_info))
-    print(site_info)
 
+    # 캠핑장 정보 가져오는 port
+    # site_info = get_site_list()
+    # site_info = set(site_info)
+    # print(len(site_info))
+    # print(site_info)
+
+    # 캠장정보 읽어오기
+    s_count, camp_url = read_camp_file()
+    # print(s_count)
+    # print(camp_url)
+
+    camp_site_crawler = CampSiteCrawler()
+    camp_site_crawler.camp_site_info(camp_url)
