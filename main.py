@@ -229,7 +229,7 @@ if __name__ == "__main__":
     # site_list = ['무릉도원', '마의태자']
     # reserve_site_main(site_list)
 
-    # 캠핑장 정보 가져오는 port
+    # 캠핑장 정보 가져오는 part
     # site_info = get_site_list()
     # site_info = set(site_info)
     # print(len(site_info))
