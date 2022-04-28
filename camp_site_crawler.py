@@ -139,7 +139,6 @@ class CampSiteCrawler:
             # print(camp_info_list)
             json_data[url.split('cseq=')[1]] = camp_info_list
             print(json.dumps(json_data, indent='\t', ensure_ascii=False))
-            break
 
 
 def camp_site_info_old(self, urls):
