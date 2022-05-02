@@ -94,7 +94,6 @@ class CampSiteCrawler:
                 temp_camp_info['tel'] = driver.find_element(By.CLASS_NAME, 'tel').text
                 temp_camp_info['address'] = driver.find_element(By.CLASS_NAME, 'addr').text
                 temp_camp_info['fee'] = driver.find_element(By.CLASS_NAME, 'pri').text
-
                 # 소개글처리
                 if driver.find_element(By.CSS_SELECTOR, '#wrap > div.wrap_in > div.container').get_attribute('class').find('ci_top_sec') != -1:
                     camp_info_list['intro'] = driver.find_element(By.CSS_SELECTOR, '#wrap > div.wrap_in > section.ci_intro_sec > div > div.txt').text
