@@ -68,77 +68,89 @@ class CampSiteCrawler:
         driver.implicitly_wait(3)
         # camp_info_list = []
         json_data = OrderedDict()
-        for url in urls:
-            driver.get(url)
-            driver.execute_script("window.scrollTo(0,700)")
-            print(url.split('cseq=')[1])
-            temp_camp_info = {}
-            camp_info_list = {}
-            indexing = ['camp_type', 'amenity', 'available', 'leisure']
+        try:
+            for url in urls:
+                driver.get(url)
+                driver.execute_script("window.scrollTo(0,700)")
+                print(url.split('cseq=')[1])
+                temp_camp_info = {}
+                camp_info_list = {}
+                indexing = ['camp_type', 'amenity', 'available', 'leisure']
 
-            temp_list = []
-            # 사진
-            for img in driver.find_elements(By.CSS_SELECTOR, '#wrap > div.wrap_in > div.container > section > div.swiper-container.ci_top_swiper > ul > li > a'):
+                temp_list = []
+                # 사진
+                for img in driver.find_elements(By.CSS_SELECTOR, '#wrap > div.wrap_in > div.container > section > div.swiper-container.ci_top_swiper > ul > li > a'):
+                    temp_list.append(img.find_element(By.CSS_SELECTOR, 'img').get_attribute('src'))
+                # 동영상
+                for img in driver.find_elements(By.CSS_SELECTOR, '#wrap > div.wrap_in > div.container > section > div.swiper-container.ci_top_swiper > ul > li > div > iframe'):
+                     temp_list.append(img.get_attribute('src'))
+                temp_camp_info['img'] = temp_list
 
-                temp_list.append(img.find_element(By.CSS_SELECTOR, 'img').get_attribute('src'))
-            # 동영상
-            for img in driver.find_elements(By.CSS_SELECTOR, '#wrap > div.wrap_in > div.container > section > div.swiper-container.ci_top_swiper > ul > li > div > iframe'):
-                 temp_list.append(img.get_attribute('src'))
-            temp_camp_info['img'] = temp_list
 
-            if driver.find_element(By.CSS_SELECTOR, '#wrap > div.wrap_in > div.container > section').get_attribute('class').find('tip_set'):
-                temp_camp_info['tip'] = driver.find_element(By.CSS_SELECTOR, '#wrap > div.wrap_in > div.container > section > div.txt_box > div.tip_set').text.replace('\n', ',')
+                if driver.find_element(By.CSS_SELECTOR, '#wrap > div.wrap_in > div.container > section').get_attribute('class').find('tip_set'):
+                    temp_camp_info['tip'] = driver.find_element(By.CSS_SELECTOR, '#wrap > div.wrap_in > div.container > section > div.txt_box > div.tip_set').text.replace('\n', ',')
 
-            temp_camp_info['site_name'] = driver.find_element(By.CSS_SELECTOR, '#wrap > div.wrap_in > div.container > section > div.txt_box > p').text
-            temp_camp_info['tel'] = driver.find_element(By.CLASS_NAME, 'tel').text
-            temp_camp_info['address'] = driver.find_element(By.CLASS_NAME, 'addr').text
-            temp_camp_info['fee'] = driver.find_element(By.CLASS_NAME, 'pri').text
+                temp_camp_info['site_name'] = driver.find_element(By.CSS_SELECTOR, '#wrap > div.wrap_in > div.container > section > div.txt_box > p').text
+                temp_camp_info['tel'] = driver.find_element(By.CLASS_NAME, 'tel').text
+                temp_camp_info['address'] = driver.find_element(By.CLASS_NAME, 'addr').text
+                temp_camp_info['fee'] = driver.find_element(By.CLASS_NAME, 'pri').text
 
-            # 소개글처리
-            if driver.find_element(By.CSS_SELECTOR, '#wrap > div.wrap_in > div.container').get_attribute('class').find('ci_top_sec') != -1:
-                camp_info_list['intro'] = driver.find_element(By.CSS_SELECTOR, '#wrap > div.wrap_in > section.ci_intro_sec > div > div.txt').text
+                # 소개글처리
+                if driver.find_element(By.CSS_SELECTOR, '#wrap > div.wrap_in > div.container').get_attribute('class').find('ci_top_sec') != -1:
+                    camp_info_list['intro'] = driver.find_element(By.CSS_SELECTOR, '#wrap > div.wrap_in > section.ci_intro_sec > div > div.txt').text
 
-            for camp_data in driver.find_elements(By.CSS_SELECTOR, '#wrap > div.wrap_in > section.use_info_sec > div > div.dtl_info > ul > li'):
-                dl = camp_data.find_element(By.CSS_SELECTOR, 'dl')
-                dt = dl.find_elements(By.TAG_NAME, 'dt')
-                dd = dl.find_elements(By.TAG_NAME, 'dd')
-
-                if dt[0].text =='관련 사이트':
-                    temp_camp_info[dt[0].text] = dd[0].text
-                    camp_info_list['summary'] = temp_camp_info
-                else:
-                    str = ''
-                    for idx in range(len(dd)):
-                        str +=dd[idx].text + ','
-                    camp_info_list[dt[0].text] = str.strip(',')
-
-            #예약가능한 사이트일 경우 예약정보 크롤링
-            if driver.find_element(By.CLASS_NAME, 'res_info').get_attribute('class').find('res_info') != -1:
-                temp_camp_info ={}
-                for camp_data in driver.find_elements(By.CSS_SELECTOR, '#wrap > div.wrap_in > section.use_info_sec > div > div.res_info > ul > li'):
+                for camp_data in driver.find_elements(By.CSS_SELECTOR, '#wrap > div.wrap_in > section.use_info_sec > div > div.dtl_info > ul > li'):
                     dl = camp_data.find_element(By.CSS_SELECTOR, 'dl')
                     dt = dl.find_elements(By.TAG_NAME, 'dt')
                     dd = dl.find_elements(By.TAG_NAME, 'dd')
 
-                    temp_camp_info[dt[0].text] = dd[0].text.replace('\n', ',')
+                    if dt[0].text =='관련 사이트':
+                        temp_camp_info[dt[0].text] = dd[0].text
+                        camp_info_list['summary'] = temp_camp_info
+                    elif dt[0].text == '':
+                        temp_camp_info['관련 사이트'] = ''
+                        camp_info_list['summary'] = temp_camp_info
+                    else:
+                        str = ''
+                        for idx in range(len(dd)):
+                            str +=dd[idx].text + ','
+                        camp_info_list[dt[0].text] = str.strip(',')
 
-                camp_info_list['reserve'] = temp_camp_info
+                for a in driver.find_elements(By.CSS_SELECTOR, '#wrap > div.wrap_in > section.use_info_sec > div > div'):
+                    # 예약가능한 사이트일 경우 예약정보 크롤링
+                    if a.get_attribute('class').find('res_info') != -1:
+                        temp_camp_info = {}
+                        for camp_data in driver.find_elements(By.CSS_SELECTOR, '#wrap > div.wrap_in > section.use_info_sec > div > div.res_info > ul > li'):
+                            dl = camp_data.find_element(By.CSS_SELECTOR, 'dl')
+                            dt = dl.find_elements(By.TAG_NAME, 'dt')
+                            dd = dl.find_elements(By.TAG_NAME, 'dd')
 
-            if driver.find_element(By.CLASS_NAME, 'time_info').get_attribute('class').find('time_info')!= -1:
-                temp_camp_info ={}
-                for camp_data in driver.find_elements(By.CSS_SELECTOR, '#wrap > div.wrap_in > section.use_info_sec > div > div.time_info > div.time_div'):
-                    temp_dict = {}
-                    for time in camp_data.find_elements(By.CSS_SELECTOR, 'ul > li > dl'):
-                        temp_dict[time.find_element(By.TAG_NAME, 'dt').text]=time.find_element(By.TAG_NAME, 'dd').text
-                    temp_camp_info[camp_data.find_element(By.CLASS_NAME, 'tit').text.split('\n')[0]] = temp_dict
+                            temp_camp_info[dt[0].text] = dd[0].text.replace('\n', ',')
 
-                camp_info_list['time'] = temp_camp_info
-                camp_info_list['id'] = url.split('cseq=')[1]
+                        camp_info_list['reserve'] = temp_camp_info
+
+                    if a.get_attribute('class').find('time_info') != -1:
+                        temp_camp_info = {}
+                        for camp_data in driver.find_elements(By.CSS_SELECTOR, '#wrap > div.wrap_in > section.use_info_sec > div > div.time_info > div.time_div'):
+                            temp_dict = {}
+                            for time in camp_data.find_elements(By.CSS_SELECTOR, 'ul > li > dl'):
+                                temp_dict[time.find_element(By.TAG_NAME, 'dt').text] = time.find_element(By.TAG_NAME, 'dd').text
+                            temp_camp_info[camp_data.find_element(By.CLASS_NAME, 'tit').text.split('\n')[0]] = temp_dict
+
+                        camp_info_list['time'] = temp_camp_info
+                        camp_info_list['id'] = url.split('cseq=')[1]
+
+                # print(camp_info_list)
+                json_data[url.split('cseq=')[1]] = camp_info_list
+                print(json.dumps(json_data, indent='\t', ensure_ascii=False))
+        except:
+            pass
+
+        finally:
+            with open('camp_site_info.json', 'w', encoding='utf-8') as make_file:
+                json.dump(json_data, make_file, ensure_ascii=False, indent='\t')
 
 
-            # print(camp_info_list)
-            json_data[url.split('cseq=')[1]] = camp_info_list
-            print(json.dumps(json_data, indent='\t', ensure_ascii=False))
 
 
 def camp_site_info_old(self, urls):
