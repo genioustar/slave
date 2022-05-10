@@ -41,7 +41,7 @@ class CampSiteCrawler:
                 # 스크롤 위치값을 수정
                 scroll_location = driver.execute_script("return document.body.scrollHeight")
 
-        for aa in driver.find_elements(By.CLASS_NAME, 'item'):
+        for aa in driver.find_elements(By.CLASS_NAME, 'camp_div'):
             # print(len(aa.find_element(By.CSS_SELECTOR, 'a').get_attribute('href').split(',')))
             if len(aa.find_element(By.CSS_SELECTOR, 'a').get_attribute('href').split(',')) == 3:
                 # print(aa.find_element(By.CSS_SELECTOR, 'a').get_attribute('href').split(',')[1])
@@ -58,7 +58,7 @@ class CampSiteCrawler:
             tmpList.append(self.get_camp_site_url(url, result))
             # break
 
-        await asyncio.wait(tmpList)
+        # await asyncio.wait(tmpList)
         print(len(result))
         print(result)
         return result
@@ -247,5 +247,5 @@ def camp_site_info_old(self, urls):
         pass
 
     # finally:
-    #     with open('camp_site_info.json', 'w', encoding='utf-8') as make_file:
+    #     with open('camp_site_info6.json', 'w', encoding='utf-8') as make_file:
     #         json.dump(json_data, make_file, ensure_ascii=False, indent='\t')
